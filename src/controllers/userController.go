@@ -10,6 +10,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/gorilla/mux"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
@@ -42,10 +43,8 @@ func GetUsers(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	// Configurar o cabeçalho Content-Type para application/json
+	// Configurar o cabeçalho Content-Type para application/json e mandar o json
 	res.Header().Set("Content-Type", "application/json")
-
-	// Escrever a resposta JSON no http.ResponseWriter
 	res.Write(jsonData)
 }
 
@@ -71,6 +70,43 @@ func CreateUser(res http.ResponseWriter, req *http.Request) {
 	}
 
 	fmt.Println(id)
-
 	res.WriteHeader(http.StatusOK)
+
+}
+
+func GetUserName(res http.ResponseWriter, req *http.Request) {
+	var arrUser []models.User
+	vars := mux.Vars(req)
+
+	userName := vars["name"]
+	filter := bson.D{{Key: "name", Value: userName}}
+
+	client := config.GetClient()
+	UserCollection := client.Database("API_GO").Collection("User")
+
+	cur, err := UserCollection.Find(context.Background(), filter)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for cur.Next(context.Background()) {
+		user := models.User{}
+
+		cur.Decode(&user)
+
+		user.CreateAt = utils.ConvertDateLocation(user.CreateAt)
+		arrUser = append(arrUser, user)
+	}
+
+	// Serializar o slice em JSON
+	jsonData, err := json.Marshal(arrUser)
+	if err != nil {
+		http.Error(res, "Erro ao serializar JSON", http.StatusInternalServerError)
+		return
+	}
+
+	// Configurar o cabeçalho Content-Type para application/json e mandar o json
+	res.Header().Set("Content-Type", "application/json")
+	res.Write(jsonData)
 }

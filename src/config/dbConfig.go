@@ -15,7 +15,6 @@ func InitDataBase() error {
 	// Configurar as opções de conexão
 	clientOptions := options.Client().ApplyURI("mongodb://localhost:27017")
 
-	// Criar um contexto
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
