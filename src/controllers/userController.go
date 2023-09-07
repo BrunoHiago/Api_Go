@@ -12,6 +12,14 @@ import (
 	"github.com/gorilla/mux"
 	"go.mongodb.org/mongo-driver/bson"
 )
+
+type Response struct {
+	Status  int           `json:"status"`
+	Message string        `json:"message"`
+	Count   int           `json:"count"`
+	Data    []models.User `json:"data"`
+}
+
 func GetUsers(res http.ResponseWriter, req *http.Request) {
 	var arrUser []models.User
 
@@ -44,16 +52,20 @@ func GetUsers(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	// Serializar o slice em JSON
-	jsonData, err := json.Marshal(arrUser)
-	if err != nil {
-		http.Error(res, "Erro ao serializar JSON: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-
 	// Configurar o cabeçalho Content-Type para application/json e enviar o JSON
 	res.Header().Set("Content-Type", "application/json")
-	res.Write(jsonData)
+	response := Response{
+		Status:  200,
+		Message: "Search completed successfully",
+		Data:    arrUser,
+		Count:   len(arrUser),
+	}
+
+	err = json.NewEncoder(res).Encode(response)
+	if err != nil {
+		http.Error(res, "Erro ao codificar JSON", http.StatusInternalServerError)
+		return
+	}
 }
 
 func CreateUser(res http.ResponseWriter, req *http.Request) {
@@ -75,13 +87,24 @@ func CreateUser(res http.ResponseWriter, req *http.Request) {
 
 	if errInser != nil {
 		http.Error(res, "Erro ao salvar no Banco:"+errInser.Error(), http.StatusInternalServerError)
+		return
 	}
 
 	fmt.Println(id)
-	res.WriteHeader(http.StatusOK)
+	response := Response{
+		Status:  200,
+		Message: "Saved user!",
+	}
+
+	res.Header().Set("Content-Type", "application/json")
+
+	err = json.NewEncoder(res).Encode(response)
+	if err != nil {
+		http.Error(res, "Erro ao codificar JSON", http.StatusInternalServerError)
+		return
+	}
 
 }
-
 
 func GetUserName(res http.ResponseWriter, req *http.Request) {
 	var arrUser []models.User
@@ -115,19 +138,23 @@ func GetUserName(res http.ResponseWriter, req *http.Request) {
 
 	err = cur.Err()
 	// Verifique se houve erros durante a iteração
-	if  err != nil {
-		http.Error(res, "Erro durante a iteração: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	// Serializar o slice em JSON
-	jsonData, err := json.Marshal(arrUser)
 	if err != nil {
-		http.Error(res, "Erro ao serializar JSON: "+err.Error(), http.StatusInternalServerError)
+		http.Error(res, "Erro durante a iteração: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	// Configurar o cabeçalho Content-Type para application/json e enviar o JSON
 	res.Header().Set("Content-Type", "application/json")
-	res.Write(jsonData)
+	response := Response{
+		Status:  200,
+		Message: "Search completed successfully",
+		Data:    arrUser,
+		Count:   len(arrUser),
+	}
+
+	err = json.NewEncoder(res).Encode(response)
+	if err != nil {
+		http.Error(res, "Erro ao codificar JSON", http.StatusInternalServerError)
+		return
+	}
 }
